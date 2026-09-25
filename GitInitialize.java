@@ -12,6 +12,11 @@ import java.util.HexFormat;
 public class GitInitialize {
     public static void main(String[] args) {
         initiate();
+        try {
+            System.out.println(hashFile("Hello.txt"));
+        } catch (IOException e) {
+            System.out.println("Hashing Error: " + e);
+        }
     }
 
     public static void initiate() {
@@ -45,6 +50,23 @@ public class GitInitialize {
         } catch (IOException e) {
             System.out.println("File Error: " + e);
         }
+    }
 
+    public static String hashFile(String filePath) throws IOException {
+        Path path = Path.of(filePath);
+        if (!Files.isRegularFile(path)) {
+            throw new IOException("no such file: " + filePath);
+        }
+        byte[] fileBytes = Files.readAllBytes(path);
+
+        MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("SHA-1");
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-1 is not available", e);
+        }
+
+        byte[] hash = digest.digest(fileBytes);
+        return HexFormat.of().formatHex(hash);
     }
 }
