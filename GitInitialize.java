@@ -10,34 +10,31 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 
 public class GitInitialize {
-    public static void main(String[] args) {
-        initiate();
-        try {
-            System.out.println(hashFile("Hello.txt"));
-        } catch (IOException e) {
-            System.out.println("Hashing Error: " + e);
-        }
-    }
 
-    public static void initiate() {
+    private File git;
+    private File objects;
+    private File index;
+    private File head;
+
+    public GitInitialize() {
         try {
             int count = 0;
-            File git = new File("git/");
+            git = new File("git/");
             if (!git.mkdir()) {
                 count++;
             }
 
-            File objects = new File(git, "objects/");
+            objects = new File(git, "objects/");
             if (!objects.mkdir()) {
                 count++;
             }
 
-            File index = new File(git, "index");
+            index = new File(git, "index");
             if (!index.createNewFile()) {
                 count++;
             }
 
-            File head = new File(git, "HEAD");
+            head = new File(git, "HEAD");
             if (!head.createNewFile()) {
                 count++;
             }
@@ -49,6 +46,16 @@ public class GitInitialize {
             }
         } catch (IOException e) {
             System.out.println("File Error: " + e);
+        }
+    }
+
+    public static void main(String[] args) {
+        GitInitialize git = new GitInitialize();
+        try {
+            System.out.println(hashFile("Hello.txt"));
+            git.createBlob("Hello.txt");
+        } catch (IOException e) {
+            System.out.println("Hashing Error: " + e);
         }
     }
 
@@ -68,5 +75,77 @@ public class GitInitialize {
 
         byte[] hash = digest.digest(fileBytes);
         return HexFormat.of().formatHex(hash);
+    }
+
+    public void createBlob(String filePath) throws IOException {
+        String hash = hashFile(filePath);
+        File hashFile = new File(objects, hash);
+        hashFile.createNewFile();
+        FileWriter hashWriter = new FileWriter(hashFile.toPath().toString());
+        BufferedReader hashReader = new BufferedReader(new FileReader(filePath));
+        String contents = hashReader.readLine();
+        while (contents != null) {
+        hashWriter.write(contents + "\n");
+        contents = hashReader.readLine();
+        }
+        hashReader.close();
+        hashWriter.close();
+
+    }
+
+    /**
+     * @return the git
+     */
+    public File getGit() {
+        return git;
+    }
+
+    /**
+     * @param git the git to set
+     */
+    public void setGit(File git) {
+        this.git = git;
+    }
+
+    /**
+     * @return the objects
+     */
+    public File getObjects() {
+        return objects;
+    }
+
+    /**
+     * @param objects the objects to set
+     */
+    public void setObjects(File objects) {
+        this.objects = objects;
+    }
+
+    /**
+     * @return the index
+     */
+    public File getIndex() {
+        return index;
+    }
+
+    /**
+     * @param index the index to set
+     */
+    public void setIndex(File index) {
+        this.index = index;
+    }
+
+    /**
+     * @return the head
+     */
+    public File getHead() {
+        return head;
+    }
+
+    /**
+     * @param head the head to set
+     */
+    public void setHead(File head) {
+        this.head = head;
     }
 }
