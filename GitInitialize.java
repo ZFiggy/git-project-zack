@@ -54,6 +54,7 @@ public class GitInitialize {
         try {
             System.out.println(hashFile("Hello.txt"));
             git.createBlob("Hello.txt");
+            git.addEntry("Hello.txt");
         } catch (IOException e) {
             System.out.println("Hashing Error: " + e);
         }
@@ -85,12 +86,25 @@ public class GitInitialize {
         BufferedReader hashReader = new BufferedReader(new FileReader(filePath));
         String contents = hashReader.readLine();
         while (contents != null) {
-        hashWriter.write(contents + "\n");
-        contents = hashReader.readLine();
+            hashWriter.write(contents + "\n");
+            contents = hashReader.readLine();
         }
         hashReader.close();
         hashWriter.close();
 
+    }
+
+    public void addEntry(String filePath) throws IOException {
+        String hash = hashFile(filePath);
+        FileWriter hashWriter = new FileWriter(index.toPath().toString());
+        BufferedReader indexReader = new BufferedReader(new FileReader(index.toPath().toString()));
+        if (indexReader.readLine() == null) {
+            hashWriter.write(hash + " " + filePath);
+        } else {
+            hashWriter.write("\n" + hash + " " + filePath);
+        }
+        hashWriter.close();
+        indexReader.close();
     }
 
     /**
