@@ -129,20 +129,7 @@ public class GitInitialize {
         if (!hashFile.exists()) {
             hashFile.createNewFile();
         }
-        FileWriter hashWriter = new FileWriter(hashFile.toPath().toString());
-        BufferedReader hashReader = new BufferedReader(new FileReader(filePath));
-        String contents = hashReader.readLine();
-        if (contents != null) {
-            hashWriter.write(contents);
-            contents = hashReader.readLine();
-        }
-        while (contents != null) {
-            hashWriter.write("\n" + contents);
-            contents = hashReader.readLine();
-        }
-        hashReader.close();
-        hashWriter.close();
-
+        Files.write(hashFile.toPath(), Files.readAllBytes(Path.of(filePath)));
     }
 
     public void addEntry(String filePath) throws IOException {
@@ -288,7 +275,7 @@ public class GitInitialize {
         int deepest = -1;
         for (String line : workingList) {
             String path = line.substring(line.lastIndexOf(" ") + 1);
-            if (getParent(path) != "") {
+            if (getParent(path).isEmpty()) {
                 if (slashes(path) > deepest) {
                     deepest = slashes(path);
                     deepestDir = getParent(path);
