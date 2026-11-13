@@ -20,6 +20,7 @@ public class GitInitialize {
     private File objects;
     private File index;
     private File head;
+    private File heads;
 
     public GitInitialize() {
         try {
@@ -44,7 +45,16 @@ public class GitInitialize {
                 count++;
             }
 
-            if (count == 4) {
+            heads = new File(git, "refs/heads");
+            if (!heads.mkdirs()) {
+                count++;
+            }
+
+            if (Files.readString(head.toPath()).isEmpty()) {
+                Files.writeString(head.toPath(), "ref: refs/heads/main");
+            }
+
+            if (count == 5) {
                 System.out.println("Git Repository Already Exists");
             } else {
                 System.out.println("Git Repository Created");
@@ -275,7 +285,7 @@ public class GitInitialize {
         int deepest = -1;
         for (String line : workingList) {
             String path = line.substring(line.lastIndexOf(" ") + 1);
-            if (getParent(path).isEmpty()) {
+            if (!getParent(path).isEmpty()) {
                 if (slashes(path) > deepest) {
                     deepest = slashes(path);
                     deepestDir = getParent(path);
@@ -526,7 +536,7 @@ public class GitInitialize {
         String rootHash = getRootTree();
 
         // Read HEAD to determine the parent commit
-        String parentHash = Files.readString(head.toPath()).trim();
+        String parentHash = getCurrentCommit();
 
         // Get the current date and time
         LocalDateTime now = LocalDateTime.now();
@@ -557,11 +567,55 @@ public class GitInitialize {
         writer.close();
 
         // Update HEAD
-        FileWriter headWriter = new FileWriter(head);
-        headWriter.write(commitHash);
-        headWriter.close();
+        String branch = getCurrentBranch();
+        if (branch == null) {
+            Files.writeString(head.toPath(), commitHash);
+        } else {
+            File branchFile = getBranchFile(branch);
+            branchFile.getParentFile().mkdirs();
+            Files.writeString(branchFile.toPath(), commitHash);
+        }
 
         return commitHash;
+    }
+
+    public File getBranchFile(String branchName) {
+        return new File(heads, branchName);
+    }
+
+    public String getCurrentBranch() throws IOException {
+        String headContents = Files.readString(head.toPath());
+        String prefix = "ref: refs/heads/";
+        if (headContents.contains(prefix)) {
+            return headContents.substring(prefix.length());
+        }
+        return null;
+    }
+
+    public String getCurrentCommit() throws IOException {
+        String branch = getCurrentBranch();
+        if (branch == null) {
+            return Files.readString(head.toPath());
+        }
+        File branchFile = getBranchFile(branch);
+        if (!branchFile.exists()) {
+            return "";
+        }
+        return Files.readString(branchFile.toPath());
+    }
+
+    public void createBranch(String branchName) throws IOException {
+        File branchFile = getBranchFile(branchName);
+        if (branchFile.exists()) {
+            throw new IOException("Branch already exists.");
+        }
+
+        String currentCommit = getCurrentCommit();
+        if (currentCommit.isEmpty()) {
+            throw new IOException("There hasn't been anything committed yet.");
+        }
+
+        Files.writeString(branchFile.toPath(), currentCommit);
     }
 
     // getters and setters
@@ -620,4 +674,20 @@ public class GitInitialize {
     public void setHead(File head) {
         this.head = head;
     }
+
+    /**
+     * @return the heads
+     */
+    public File getHeads() {
+        return heads;
+    }
+
+    /**
+     * @param heads the heads to set
+     */
+    public void setHeads(File heads) {
+        this.heads = heads;
+    }
 }
+
+

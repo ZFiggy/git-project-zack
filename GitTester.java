@@ -84,5 +84,26 @@ public class GitTester {
 
         System.out.println("\nAfter checkout:");
         System.out.println(Files.readString(Path.of("hello.txt")));
+
+        System.out.println("HEAD: " + Files.readString(Path.of("git/HEAD")));
+
+        GitWrapper.checkout("main");
+
+        Files.writeString(Path.of("a.txt"), "one");
+        GitWrapper.add("a.txt");
+        GitWrapper.commit("Zack", "one");
+
+        GitWrapper.createBranch("feature");
+        GitWrapper.checkout("feature");
+
+        Files.writeString(Path.of("a.txt"), "two");
+        GitWrapper.add("a.txt");
+        GitWrapper.commit("Zack", "two");
+
+        GitWrapper.checkout("main");
+        System.out.println("On main, a.txt: " + Files.readString(Path.of("a.txt")));
+
+        GitWrapper.checkout("feature");
+        System.out.println("On feature, a.txt: " + Files.readString(Path.of("a.txt")));
     }
 }

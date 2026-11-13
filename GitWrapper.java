@@ -62,6 +62,32 @@ public class GitWrapper {
         }
     }
 
+    public static void createBranch(String branchName) throws IOException {
+        GitInitialize git = new GitInitialize();
+        git.createBranch(branchName);
+    }
+
+    public static void checkout(String branchName, boolean called) throws IOException {
+        try {
+            File branchFile = new File("git/refs/heads/" + branchName);
+
+            if (!branchFile.exists()) {
+                createBranch(branchName);
+                Files.writeString(Path.of("git/HEAD"), "ref: refs/heads/" + branchName);
+                return;
+            }
+
+            String commitHash = Files.readString(branchFile.toPath());
+
+            checkout(commitHash);
+
+            Files.writeString(Path.of("git/HEAD"), "ref: refs/heads/" + branchName);
+
+        } catch (IOException e) {
+            throw new IOException("Checkout failed.");
+        }
+    }
+
     /**
      * EXTRA CREDIT: Restores the working directory to the state of a specific
      * commit.
@@ -72,6 +98,10 @@ public class GitWrapper {
     public static void checkout(String commitHash) {
 
         try {
+            if (commitHash.length() != 40) {
+                checkout(commitHash, true);
+                return;
+            }
 
         File commitFile = new File("git/objects/" + commitHash);
 
@@ -100,6 +130,8 @@ public class GitWrapper {
            System.out.println("Root tree: " + rootHash);
 
            restoreTree(rootHash, "");
+
+           Files.writeString(Path.of("git/HEAD"), commitHash);
 
            System.out.println("Checkout completed!");
 
